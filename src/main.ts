@@ -8,11 +8,6 @@ import * as installer from './installer.js';
 
 async function run(): Promise<void> {
   try {
-    if (os.platform() == 'darwin') {
-      core.setFailed('Not supported on darwin platform');
-      return;
-    }
-
     const inputs: context.Inputs = await context.getInputs();
     const upx = await installer.getUPX(inputs.version);
 
@@ -35,7 +30,7 @@ async function run(): Promise<void> {
       core.endGroup();
     });
   } catch (error) {
-    core.setFailed(error.message);
+    core.setFailed(error instanceof Error ? error.message : String(error));
   }
 }
 
