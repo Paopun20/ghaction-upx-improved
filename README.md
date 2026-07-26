@@ -16,7 +16,6 @@ ___
 * [Usage](#usage)
 * [Customizing](#customizing)
   * [inputs](#inputs)
-* [Limitation](#limitation)
 * [Contributing](#contributing)
 * [License](#license)
 
@@ -66,7 +65,7 @@ jobs:
 
 ## Customizing
 
-### inputs
+### Inputs
 
 The following inputs can be used as `step.with` keys
 
@@ -76,10 +75,6 @@ The following inputs can be used as `step.with` keys
 | `files`        | String |          | Newline-delimited list of path globs for files to compress |
 | `args`         | String |          | Arguments to pass to UPX                                   |
 | `install-only` | String | `false`  | Just install UPX                                           |
-
-## Limitation
-
-This action is only available for Linux and Windows [virtual environments](https://help.github.com/en/articles/virtual-environments-for-github-actions#supported-virtual-environments-and-hardware-resources).
 
 ## Contributing
 

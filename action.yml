@@ -26,7 +26,6 @@ inputs:
     default: 'false'
     required: false
 
-
 runs:
   using: 'node24'
   main: 'dist/index.cjs'
