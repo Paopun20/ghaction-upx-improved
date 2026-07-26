@@ -1,4 +1,4 @@
-import {lstatSync} from 'fs';
+import { lstatSync } from 'fs';
 import * as glob from 'glob';
 import * as core from '@actions/core';
 
@@ -14,24 +14,31 @@ export async function getInputs(): Promise<Inputs> {
     version: core.getInput('version') || 'latest',
     files: getInputList(core.getInput('files') || core.getInput('file'), true),
     args: core.getInput('args'),
-    installOnly: core.getBooleanInput('install-only')
+    installOnly: core.getBooleanInput('install-only'),
   };
 }
 
 export function getInputList(items: string, ignoreComma?: boolean): string[] {
-  if (items == '') {
+  if (items === '') {
     return [];
   }
+
   return items
     .split(/\r?\n/)
     .filter(x => x)
     .reduce<string[]>(
-      (acc, line) => acc.concat(!ignoreComma ? line.split(',').filter(x => x) : line).map(pat => pat.trim()),
+      (acc, line) =>
+        acc
+          .concat(!ignoreComma ? line.split(',').filter(x => x) : line)
+          .map(pat => pat.trim()),
       []
     );
 }
 
-export const asyncForEach = async (array, callback) => {
+export const asyncForEach = async <T>(
+  array: T[],
+  callback: (item: T, index: number, array: T[]) => Promise<void>
+): Promise<void> => {
   for (let index = 0; index < array.length; index++) {
     await callback(array[index], index, array);
   }
@@ -39,6 +46,6 @@ export const asyncForEach = async (array, callback) => {
 
 export const resolvePaths = (patterns: string[]): string[] => {
   return patterns.reduce((acc: string[], pattern: string): string[] => {
-    return acc.concat(glob.sync(pattern).filter(path => lstatSync(path).isFile()));
+    return acc.concat(glob.sync(pattern).filter(file => lstatSync(file).isFile()));
   }, []);
 };
