@@ -31,62 +31,83 @@ export const getRelease = async (version: string): Promise<GitHubRelease> => {
   return releases[version];
 };
 
+function getPlatformCandidates(): string[] {
+  // Node reports macOS as "darwin"; some release assets may use "macos".
+  const base = osArch === 'x64'
+    ? (osPlat === 'win32' ? 'win64' : `amd64`)
+    : osArch === 'x32'
+      ? (osPlat === 'win32' ? 'win32' : `i386`)
+      : osArch === 'arm'
+        ? (() => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const armVersion = (process.config.variables as any).arm_version;
+            return armVersion === '7' ? 'armeb' : 'arm';
+          })()
+        : osArch;
+
+  if (osPlat === 'darwin') {
+    return [`${base}_darwin`, `${base}_macos`];
+  }
+
+  return [`${base}_${osPlat}`];
+}
+
+function getName(version: string, platform: string): string {
+  return util.format('upx-%s-%s', version, platform);
+}
+
 export async function getUPX(version: string): Promise<string> {
   const release: GitHubRelease = await getRelease(version);
   const semver: string = release.tag_name.replace(/^v/, '');
   core.info(`UPX ${semver} found`);
 
-  const filename = util.format('%s.%s', getName(semver), osPlat == 'win32' ? 'zip' : 'tar.xz');
-  const downloadUrl = util.format('https://github.com/upx/upx/releases/download/v%s/%s', semver, filename);
+  const candidates = getPlatformCandidates();
+  const ext = osPlat === 'win32' ? 'zip' : 'tar.xz';
 
-  core.startGroup(`Downloading ${downloadUrl}...`);
+  let downloadUrl: string | undefined;
+  let extractedPath: string | undefined;
+  let cachePath: string | undefined;
 
-  const downloadPath: string = await tc.downloadTool(downloadUrl);
-  core.info(`Downloaded to ${downloadPath}`);
+  for (const platform of candidates) {
+    const filename = `${getName(semver, platform)}.${ext}`;
+    const candidateUrl = `https://github.com/upx/upx/releases/download/v${semver}/${filename}`;
 
-  let extPath: string;
-  if (osPlat == 'win32') {
-    extPath = await tc.extractZip(downloadPath);
-  } else {
-    extPath = await tc.extractTar(downloadPath, undefined, 'x');
+    try {
+      core.startGroup(`Downloading ${candidateUrl}...`);
+
+      const downloadPath: string = await tc.downloadTool(candidateUrl);
+      core.info(`Downloaded to ${downloadPath}`);
+
+      if (osPlat === 'win32') {
+        extractedPath = await tc.extractZip(downloadPath);
+      } else {
+        extractedPath = await tc.extractTar(downloadPath, undefined, 'x');
+      }
+      core.info(`Extracted to ${extractedPath}`);
+
+      cachePath = await tc.cacheDir(extractedPath, 'ghaction-upx', semver);
+      core.debug(`Cached to ${cachePath}`);
+
+      downloadUrl = candidateUrl;
+      break;
+    } catch (err) {
+      core.warning(`Failed with ${platform}: ${(err as Error).message}`);
+      core.endGroup();
+    }
   }
-  core.info(`Extracted to ${extPath}`);
 
-  const cachePath: string = await tc.cacheDir(extPath, 'ghaction-upx', semver);
-  core.debug(`Cached to ${cachePath}`);
+  if (!downloadUrl || !cachePath) {
+    throw new Error(`Could not find a matching UPX asset for ${osPlat}/${osArch}`);
+  }
 
-  const exePath: string = path.join(cachePath, getName(semver), osPlat == 'win32' ? 'upx.exe' : 'upx');
+  const selectedPlatform = candidates.find((platform) => {
+    const exePath = path.join(cachePath!, getName(semver, platform), osPlat === 'win32' ? 'upx.exe' : 'upx');
+    return true;
+  }) ?? candidates[0];
+
+  const exePath = path.join(cachePath, getName(semver, selectedPlatform), osPlat === 'win32' ? 'upx.exe' : 'upx');
   core.debug(`Exe path is ${exePath}`);
   core.endGroup();
 
   return exePath;
-}
-
-function getName(version: string): string {
-  let platform: string;
-  switch (osArch) {
-    case 'x64': {
-      platform = osPlat === 'win32' ? 'win64' : 'amd64_' + osPlat;
-      break;
-    }
-    case 'x32': {
-      platform = osPlat === 'win32' ? 'win32' : 'i386_' + osPlat;
-      break;
-    }
-    case 'arm': {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const arm_version = (process.config.variables as any).arm_version;
-      if (arm_version === '7') {
-        platform = 'armeb_' + osPlat;
-      } else {
-        platform = 'arm_' + osPlat;
-      }
-      break;
-    }
-    default: {
-      platform = osArch + '_' + osPlat;
-      break;
-    }
-  }
-  return util.format('upx-%s-%s', version, platform);
 }
