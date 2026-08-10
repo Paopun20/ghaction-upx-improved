@@ -64,10 +64,24 @@ describe('asyncForEach', () => {
 });
 
 describe('resolvePaths', () => {
-  it('resolve files given a set of paths', async () => {
-    expect(
-      context.resolvePaths([path.join(__dirname, 'fixtures/data/**/*').split(path.sep).join(path.posix.sep)])
-    ).toEqual([path.join(__dirname, 'fixtures/data/foo/bar.txt').split(path.sep).join(path.posix.sep)]);
+  it('resolves files given a set of paths', () => {
+    const pattern = path
+      .join(__dirname, 'fixtures/data/**/*')
+      .split(path.sep)
+      .join(path.posix.sep);
+
+    const expected = path
+      .join(__dirname, 'fixtures/data/foo/bar.txt')
+      .split(path.sep)
+      .join(path.posix.sep);
+
+    const actual = context
+      .resolvePaths([pattern])
+      .map(filePath =>
+        filePath.split(path.sep).join(path.posix.sep)
+      );
+
+    expect(actual).toEqual([expected]);
   });
 });
 

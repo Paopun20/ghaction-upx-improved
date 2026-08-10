@@ -11,13 +11,17 @@ GitHub Action for [UPX](https://github.com/upx/upx), the Ultimate Packer for eXe
 
 ![Screenshot](.github/ghaction-upx.png)
 
-___
+## Note
 
-* [Usage](#usage)
-* [Customizing](#customizing)
-  * [inputs](#inputs)
-* [Contributing](#contributing)
-* [License](#license)
+This action is a fork of [crazy-max/ghaction-upx](https://github.com/crazy-max/ghaction-upx) with some improvements and fixes :3
+
+---
+
+- [Usage](#usage)
+- [Customizing](#customizing)
+  - [inputs](#inputs)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Usage
 
@@ -31,9 +35,8 @@ jobs:
   upx:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Run UPX
-        uses: crazy-max/ghaction-upx@v4
+      - name: Run UPX
+        uses: paopun20/ghaction-upx-improved@main
         with:
           version: latest
           files: |
@@ -53,13 +56,11 @@ jobs:
   upx:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Install UPX
-        uses: crazy-max/ghaction-upx@v4
+      - name: Install UPX
+        uses: paopun20/ghaction-upx-improved@main
         with:
           install-only: true
-      -
-        name: UPX version
+      - name: UPX version
         run: upx --version
 ```
 
@@ -69,12 +70,12 @@ jobs:
 
 The following inputs can be used as `step.with` keys
 
-| Name           | Type   | Default  | Description                                                |
-|----------------|--------|----------|------------------------------------------------------------|
-| `version`      | String | `latest` | UPX version. Example: `v3.95`                              |
-| `files`        | String |          | Newline-delimited list of path globs for files to compress |
-| `args`         | String |          | Arguments to pass to UPX                                   |
-| `install-only` | String | `false`  | Just install UPX                                           |
+| Name           | Default  | Description                                                |
+| -------------- | -------- | ---------------------------------------------------------- |
+| `version`      | `latest` | UPX version. Example: `v3.95`                              |
+| `files`        |          | Newline-delimited list of path globs for files to compress |
+| `args`         |          | Arguments to pass to UPX                                   |
+| `install-only` | `false`  | Just install UPX                                           |
 
 ## Contributing
 

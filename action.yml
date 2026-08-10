@@ -25,7 +25,6 @@ inputs:
     description: 'Just install upx'
     default: 'false'
     required: false
-
 runs:
   using: 'node24'
   main: 'dist/index.cjs'
