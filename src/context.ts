@@ -1,4 +1,4 @@
-import { lstatSync } from 'fs';
+import {lstatSync} from 'fs';
 import * as glob from 'glob';
 import * as core from '@actions/core';
 
@@ -14,7 +14,7 @@ export async function getInputs(): Promise<Inputs> {
     version: core.getInput('version') || 'latest',
     files: getInputList(core.getInput('files') || core.getInput('file'), true),
     args: core.getInput('args'),
-    installOnly: core.getBooleanInput('install-only'),
+    installOnly: core.getBooleanInput('install-only')
   };
 }
 
@@ -27,10 +27,7 @@ export function getInputList(items: string, ignoreComma?: boolean): string[] {
     .split(/\r?\n/)
     .filter(x => x)
     .reduce<string[]>(
-      (acc, line) =>
-        acc
-          .concat(!ignoreComma ? line.split(',').filter(x => x) : line)
-          .map(pat => pat.trim()),
+      (acc, line) => acc.concat(!ignoreComma ? line.split(',').filter(x => x) : line).map(pat => pat.trim()),
       []
     );
 }

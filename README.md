@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run UPX
-        uses: paopun20/ghaction-upx-improved@main
+        uses: paopun20/ghaction-upx-improved@master
         with:
           version: latest
           files: |
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install UPX
-        uses: paopun20/ghaction-upx-improved@main
+        uses: paopun20/ghaction-upx-improved@master
         with:
           install-only: true
       - name: UPX version

@@ -1,23 +1,23 @@
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
+import process from 'process';
+
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as tc from '@actions/tool-cache';
 
 import * as fetcher from './fetcher.js';
 
-const osPlat: string = os.platform();
-const osArch: string = os.arch();
+const CURRENT_PLATFORM: string = os.platform();
+const CURRENT_ARCH: string = os.arch();
 
 export async function getRelease(version: string): Promise<fetcher.GitHubRelease> {
   const releases = await fetcher.fetchGithubReleases();
   const release = releases[version];
 
   if (!release) {
-    throw new Error(
-      `Cannot find UPX release ${version} in https://raw.githubusercontent.com/crazy-max/ghaction-upx/master/.github/upx-releases.json`
-    );
+    throw new Error(`Cannot find UPX release ${version} from Github API`);
   }
 
   return release;
@@ -42,24 +42,17 @@ const PLATFORM_TOKENS: Record<string, string> = {
 
 function getLinuxArmToken(): string {
   const armVersion = (process.config.variables as any).arm_version;
-
   return armVersion === '7' ? 'armeb_linux' : 'arm_linux';
 }
 
 function getPlatformToken(): string | undefined {
-  if (osPlat === 'linux' && osArch === 'arm') {
-    return getLinuxArmToken();
-  }
+  if (CURRENT_PLATFORM === 'linux' && CURRENT_ARCH === 'arm') return getLinuxArmToken();
 
-  return PLATFORM_TOKENS[`${osPlat}:${osArch}`];
+  return PLATFORM_TOKENS[`${CURRENT_PLATFORM}:${CURRENT_ARCH}`];
 }
 
 function getName(version: string, platformToken: string): string {
   return util.format('upx-%s-%s', version, platformToken);
-}
-
-function unsupportedPlatformError(): Error {
-  return new Error(`Could not find a matching UPX asset for ${osPlat}/${osArch}`);
 }
 
 async function installUpxWithBrew(): Promise<string> {
@@ -76,7 +69,7 @@ async function installUpxWithBrew(): Promise<string> {
 
 export async function getUPX(version: string): Promise<string> {
   // UPX does not publish macOS binaries.
-  if (osPlat === 'darwin') {
+  if (CURRENT_PLATFORM === 'darwin') {
     return await installUpxWithBrew();
   }
 
@@ -87,12 +80,11 @@ export async function getUPX(version: string): Promise<string> {
   core.info(`UPX ${semver} found`);
 
   const platformToken = getPlatformToken();
-
   if (!platformToken) {
-    throw unsupportedPlatformError();
+    throw new Error(`Could not find a matching UPX asset for ${CURRENT_PLATFORM}/${CURRENT_ARCH}`);
   }
 
-  const ext = osPlat === 'win32' ? 'zip' : 'tar.xz';
+  const ext = CURRENT_PLATFORM === 'win32' ? 'zip' : 'tar.xz';
 
   const assetName = getName(semver, platformToken);
 
@@ -116,7 +108,9 @@ export async function getUPX(version: string): Promise<string> {
     core.info(`Downloaded to ${downloadPath}`);
 
     const extractedPath =
-      osPlat === 'win32' ? await tc.extractZip(downloadPath) : await tc.extractTar(downloadPath, undefined, 'x');
+      CURRENT_PLATFORM === 'win32'
+        ? await tc.extractZip(downloadPath)
+        : await tc.extractTar(downloadPath, undefined, 'x');
 
     core.info(`Extracted to ${extractedPath}`);
 
@@ -127,7 +121,7 @@ export async function getUPX(version: string): Promise<string> {
     core.endGroup();
   }
 
-  const exePath = path.join(cachePath, assetName, osPlat === 'win32' ? 'upx.exe' : 'upx');
+  const exePath = path.join(cachePath, assetName, CURRENT_PLATFORM === 'win32' ? 'upx.exe' : 'upx');
 
   core.debug(`Exe path is ${exePath}`);
 

@@ -21,7 +21,7 @@ describe('getRelease', () => {
   it('unknown release', () => {
     return expect(installer.getRelease('foo')).rejects.toThrow(
       new Error(
-        'Cannot find UPX release foo in https://raw.githubusercontent.com/crazy-max/ghaction-upx/master/.github/upx-releases.json'
+        'Cannot find UPX release foo from Github API'
       )
     );
   });
